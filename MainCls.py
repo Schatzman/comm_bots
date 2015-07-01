@@ -16,6 +16,10 @@ class CommBot(object):
         self.log_lines_remembered = 10
         self.known_commbots = []
         self.known_active_commbots = []
+        self.watching_files = False
+        self.watched_files = {}
+        self.watching = True
+        self.report = ''
         self.default_conf = """# commbot configuration file
 sleep_interval=3
 name={}
@@ -49,6 +53,8 @@ log_lines_remembered=10
         self.open_or_create_file(self.log_name, 'append')
         if str(self.file_name) == str(self.log_name):
             self._file.write(str(self.name) + " Heartbeat. " + str(datetime.datetime.utcnow()) + "\n")
+            if self.report != '':
+                self._file.write(str(self.name) + " Watched files, " + self.report)
 
     def open_or_create_conf(self):
         self.open_or_create_file(self.conf_name, 'read')
@@ -125,6 +131,40 @@ log_lines_remembered=10
         for commbot in self.known_active_commbots:
             print commbot
 
+    def watch_files(self, filename_list=[]):
+        file_changed = False
+        changed_files = []
+        for filename in filename_list:
+            _file = open(filename, 'r')
+            contents = ' '.join(_file.readlines())
+            _file.close()
+            if filename not in self.watched_files:
+                self.watched_files[filename] = contents
+            else:
+                if self.watched_files[filename] != contents:
+                    file_changed = True
+                    changed_files.append(filename + ' discovered@UTC: ' + repr(datetime.datetime.utcnow()))
+        return file_changed, changed_files
+
+    def auto_watch(self):
+        self.report = ''
+        currently_watched = []
+        for filename in self.watched_files:
+            currently_watched.append(filename)
+        file_changed, changed_files = self.watch_files(currently_watched)
+        if file_changed:
+            if len(changed_files) == 1:
+                self.report = 'The following file was changed: ' + changed_files[0]
+            else:
+                self.report = 'The following files were changed: ' + ', '.join(changed_files)
+
+    def stop_watching_files(self, filename_list=[]):
+        for filename in filename_list:
+            try:
+                del self.watched_files[filename]
+            except:
+                print 'Unable to stop watching filename ' + repr(filename)
+
     def main_loop(self):
         self.open_or_create_log()
         self.open_or_create_conf()
@@ -133,4 +173,6 @@ log_lines_remembered=10
         self.close_file()
         self.sleeping()
         self.status_report()
+        if self.watching:
+            self.auto_watch()
         self.check_active_commbot()
