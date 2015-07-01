@@ -118,10 +118,10 @@ log_lines_remembered=10
                     self.known_commbots.append(commbot_name)
                 if commbot_name not in self.known_active_commbots:
                     self.known_active_commbots.append(commbot_name)
-        print "\nKnown commbot:"
+        print "\nKnown commbots:"
         for commbot in self.known_commbots:
             print commbot
-        print "\nKnown active commbot:"
+        print "\nKnown active commbots:"
         for commbot in self.known_active_commbots:
             print commbot
 
