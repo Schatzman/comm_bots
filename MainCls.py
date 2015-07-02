@@ -15,6 +15,7 @@ log_lines_remembered=10
 """
 
 class CommBot(object):
+
     def __init__(self, name):
         self.name = name
         self.log_name = 'heart_beats.log'
@@ -28,6 +29,8 @@ class CommBot(object):
         self.watching = True
         self.report = ''
         self.default_conf = DEFAULT_CONF.format(name)
+
+# file methods
     def open_or_create_file(self, file_name, permissions):
         self.file_name = file_name
         self.new_file = False
@@ -47,6 +50,7 @@ class CommBot(object):
         print "\nClosing " + self.file_name + "..."
         self._file.close()
 
+# log methods
     def open_or_create_log(self):
         self.update_log()
         self.close_file()
@@ -59,6 +63,7 @@ class CommBot(object):
                 self._file.write(str(self.name) + " Watched files, " + self.report)
                 self.report = ''
 
+# conf methods
     def open_or_create_conf(self):
         self.open_or_create_file(self.conf_name, 'read')
         if self.new_file == True:
@@ -95,6 +100,7 @@ class CommBot(object):
         if 'log_lines_remembered' in self.conf_dict:
             self.log_lines_remembered = self.conf_dict['log_lines_remembered']
 
+# general
     def sleeping(self):
         print "Sleeping for " + str(self.sleep_interval) + " seconds..."
         time.sleep(int(self.sleep_interval))
@@ -134,6 +140,7 @@ class CommBot(object):
         for commbot in self.known_active_commbots:
             print commbot
 
+# watcher methods
     def watch_files(self, filename_list=[]):
         file_changed = False
         changed_files = []
@@ -176,6 +183,7 @@ class CommBot(object):
             except:
                 print 'Unable to stop watching filename ' + repr(filename)
 
+# general
     def main_loop(self):
         self.open_or_create_log()
         self.open_or_create_conf()
