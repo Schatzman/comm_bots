@@ -7,6 +7,13 @@ from pprint import pprint
 import sys
 import time
 
+DEFAULT_CONF = """# commbot configuration file
+sleep_interval=10
+name={}
+heartbeat_log_name=heart_beats.log
+log_lines_remembered=10
+"""
+
 class CommBot(object):
     def __init__(self, name):
         self.name = name
@@ -17,15 +24,10 @@ class CommBot(object):
         self.known_commbots = []
         self.known_active_commbots = []
         self.watching_files = False
-        self.watched_files = {}
+        self.watched_files = {self.conf_name : DEFAULT_CONF.format(name)}
         self.watching = True
         self.report = ''
-        self.default_conf = """# commbot configuration file
-sleep_interval=3
-name={}
-heartbeat_log_name=heart_beats.log
-log_lines_remembered=10
-""".format(name)
+        self.default_conf = DEFAULT_CONF.format(name)
     def open_or_create_file(self, file_name, permissions):
         self.file_name = file_name
         self.new_file = False
@@ -52,9 +54,10 @@ log_lines_remembered=10
     def update_log(self):
         self.open_or_create_file(self.log_name, 'append')
         if str(self.file_name) == str(self.log_name):
-            self._file.write(str(self.name) + " Heartbeat. " + str(datetime.datetime.utcnow()) + "\n")
+            self._file.write(str(self.name) + " Heartbeat. " + str(datetime.datetime.utcnow().__str__()) + "\n")
             if self.report != '':
                 self._file.write(str(self.name) + " Watched files, " + self.report)
+                self.report = ''
 
     def open_or_create_conf(self):
         self.open_or_create_file(self.conf_name, 'read')
@@ -142,14 +145,22 @@ log_lines_remembered=10
                 self.watched_files[filename] = contents
             else:
                 if self.watched_files[filename] != contents:
+                    print "Watched file NOT as remembered!\r\n"
+                    print "IT WAS:"
+                    print self.watched_files[filename]
+                    print "\r\nNOW:"
+                    print contents
                     file_changed = True
-                    changed_files.append(filename + ' discovered@UTC: ' + repr(datetime.datetime.utcnow()))
+                    changed_files.append(filename + ' discovered@UTC: ' + repr(datetime.datetime.utcnow().__str__()) + '\r\n')
+                    self.watched_files[filename] = contents
         return file_changed, changed_files
 
     def auto_watch(self):
+        print "Watching file(s): "
         self.report = ''
         currently_watched = []
         for filename in self.watched_files:
+            print str(filename)
             currently_watched.append(filename)
         file_changed, changed_files = self.watch_files(currently_watched)
         if file_changed:
